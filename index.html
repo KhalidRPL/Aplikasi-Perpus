@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perpustakaan SMK N 1 Gedong Tataan</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: #f4f6f9;
+    }
+
+    header {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .form-section, .table-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      flex: 1;
+      min-width: 300px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-bottom: 15px;
+    }
+
+    form input, form button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    form button {
+      background: #4facfe;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    form button:hover {
+      background: #00c6ff;
+    }
+
+    #preview {
+      width: 100px;
+      margin: 10px 0;
+      border-radius: 6px;
+      display: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table th, table td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+
+    table img {
+      width: 50px;
+      border-radius: 5px;
+    }
+
+    .btn {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 2px;
+      color: white;
+    }
+
+    .edit {
+      background: #f39c12;
+    }
+
+    .delete {
+      background: #e74c3c;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>📚 Perpustakaan SMK Negeri 1 Gedong Tataan</h1>
+  </header>
+
+  <div class="container">
+
+    <div class="form-section">
+      <h2>Tambah / Edit Buku</h2>
+      <form id="bookForm">
+        <input type="text" id="judul" placeholder="Judul Buku" required>
+        <input type="text" id="penerbit" placeholder="Penerbit" required>
+        <input type="number" id="tahun" placeholder="Tahun" required>
+        <input type="number" id="stok" placeholder="Stok" required>
+        <input type="file" id="sampul" accept="image/*">
+        
+        <img id="preview" />
+        
+        <button type="submit">Simpan Buku</button>
+      </form>
+    </div>
+
+    <div class="table-section">
+      <h2>Laporan Buku</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Sampul</th>
+            <th>Judul</th>
+            <th>Penerbit</th>
+            <th>Tahun</th>
+            <th>Stok</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="bookList"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    const form = document.getElementById("bookForm");
+    const bookList = document.getElementById("bookList");
+    const preview = document.getElementById("preview");
+    const sampulInput = document.getElementById("sampul");
+
+    let books = [];
+    let editIndex = null;
+
+    // Preview gambar
+    sampulInput.addEventListener("change", function() {
+      const file = this.files[0];
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+      }
+    });
+
+    // Submit form
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const judul = document.getElementById("judul").value;
+      const penerbit = document.getElementById("penerbit").value;
+      const tahun = document.getElementById("tahun").value;
+      const stok = document.getElementById("stok").value;
+
+      let sampulURL = preview.src;
+
+      if (sampulInput.files[0]) {
+        sampulURL = URL.createObjectURL(sampulInput.files[0]);
+      }
+
+      const book = {
+        judul,
+        penerbit,
+        tahun,
+        stok,
+        sampul: sampulURL
+      };
+
+      if (editIndex !== null) {
+        books[editIndex] = book;
+        editIndex = null;
+      } else {
+        books.push(book);
+      }
+
+      renderTable();
+      form.reset();
+      preview.style.display = "none";
+    });
+
+    function renderTable() {
+      bookList.innerHTML = "";
+
+      books.forEach((book, index) => {
+        const row = `
+          <tr>
+            <td><img src="${book.sampul}"></td>
+            <td>${book.judul}</td>
+            <td>${book.penerbit}</td>
+            <td>${book.tahun}</td>
+            <td>${book.stok}</td>
+            <td>
+              <button class="btn edit" onclick="editBook(${index})">Edit</button>
+              <button class="btn delete" onclick="deleteBook(${index})">Hapus</button>
+            </td>
+          </tr>
+        `;
+        bookList.innerHTML += row;
+      });
+    }
+
+    function deleteBook(index) {
+      if (confirm("Yakin ingin menghapus buku ini?")) {
+        books.splice(index, 1);
+        renderTable();
+      }
+    }
+
+    function editBook(index) {
+      const book = books[index];
+
+      document.getElementById("judul").value = book.judul;
+      document.getElementById("penerbit").value = book.penerbit;
+      document.getElementById("tahun").value = book.tahun;
+      document.getElementById("stok").value = book.stok;
+
+      preview.src = book.sampul;
+      preview.style.display = "block";
+
+      editIndex = index;
+    }
+  </script>
+
+</body>
+</html>
